@@ -104,7 +104,6 @@
             <artifactId>unirest-java</artifactId>
             <version>3.14.1</version>
         </dependency>
-
     </dependencies>
 
     <build>
