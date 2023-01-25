@@ -13,7 +13,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+
+import java.time.LocalDateTime;
+
+import static no.eg.nexstephub.client.util.DateTimeUtil.dateTimeFormatter;
 
 @Service
 public abstract class AbstractService {
@@ -31,7 +36,7 @@ public abstract class AbstractService {
     public AbstractService() {
     }
 
-    protected ResponseEntity<GeneralResponseDto> doPostRequest(String url, BearerAuthenticationToken bearerAuthenticationToken, Object messageDto) {
+    protected GeneralResponseDto doPostRequest(String url, BearerAuthenticationToken bearerAuthenticationToken, Object messageDto) {
         final HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
         String authToken = bearerAuthenticationToken.getAuthorizationToken();
@@ -39,13 +44,12 @@ public abstract class AbstractService {
 
         HttpEntity request = new HttpEntity<>(messageDto, httpHeaders);
         ResponseEntity response = null;
-        response = restTemplate.exchange(url, HttpMethod.POST, request, JsonNode.class);
 
         try {
+            response = restTemplate.exchange(url, HttpMethod.POST, request, JsonNode.class);
             if (!response.getStatusCode().is2xxSuccessful()) {
-                String s = "Failed to call url " + url + ", status " + response.getStatusCode();
-                logger.error(s);
-                throw new RuntimeException(s);
+                logger.error("Failed to call '" + url + "'. Status " + response.getStatusCode());
+                return (GeneralResponseDto) response.getBody();
             } else {
                 Object object = response.getBody();
                 logger.info("object " + object);
@@ -59,16 +63,24 @@ public abstract class AbstractService {
                         throw new IllegalArgumentException("Failed to parse result");
                     }
 
-                    return new ResponseEntity<>(messageDtoGeneralResponseDto, response.getStatusCode());
+                    return messageDtoGeneralResponseDto;
                 } else {
                     String s = "Invalid return type: " + (object == null ? null : object.getClass().getName()) + ". Expected: com.fasterxml.jackson.databind.node.ObjectNode";
                     logger.error(s);
                     throw new IllegalArgumentException(s);
                 }
             }
-        } catch (Exception e) {
+        } catch (HttpClientErrorException e) {
+            logger.error("Failure in request to URL '" +url+"'", e);
+            GeneralResponseDto<MessageDto> result = new GeneralResponseDto<>();
+            result.setHttpStatusCode(e.getStatusCode().value());
+            result.setOccurred_at(LocalDateTime.now().format(dateTimeFormatter));
+            result.setMessage(e.getMessage());
+            return result;
+        }
+        catch (Exception e) {
             logger.error("Failed to map result to object", e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw e;
         }
     }
 

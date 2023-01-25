@@ -27,8 +27,8 @@ public class MessageService extends AbstractService {
             BearerAuthenticationToken bearerAuthenticationToken = authorizationService.getBearerAuthenticationToken();
             if (bearerAuthenticationToken != null && !bearerAuthenticationToken.isExpired()) {
                 String url = "http://localhost:8080/api/private/message";
-                ResponseEntity<GeneralResponseDto> response = doPostRequest(url, bearerAuthenticationToken, messageDto);
-                MessageDto responseMessageDto = (MessageDto) response.getBody().getData();
+                GeneralResponseDto response = doPostRequest(url, bearerAuthenticationToken, messageDto);
+                MessageDto responseMessageDto = (MessageDto) response.getData();
                 return responseMessageDto;
             } else {
                 String s = "Failed to get valid api-token for client type " + client.getClientType();

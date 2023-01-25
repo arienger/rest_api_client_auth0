@@ -17,6 +17,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -161,8 +162,16 @@ public class NexstephubclientApplication {
         return client;
     }
 
+    /**
+     * https://stackoverflow.com/questions/13837012/spring-resttemplate-timeout/53499506#53499506
+     * @param restTemplateBuilder
+     * @return
+     */
     @Bean
     public RestTemplate restTemplate(@Autowired RestTemplateBuilder restTemplateBuilder) {
-        return restTemplateBuilder.build();
+        return restTemplateBuilder
+                .setConnectTimeout(Duration.ofMillis(120000))
+                .setReadTimeout(Duration.ofMillis(120000))
+                .build();
     }
 }

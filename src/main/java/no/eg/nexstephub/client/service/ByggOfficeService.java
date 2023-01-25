@@ -25,8 +25,13 @@ public class ByggOfficeService extends AbstractService{
             BearerAuthenticationToken bearerAuthenticationToken = authorizationService.getBearerAuthenticationToken();
             if (bearerAuthenticationToken != null && !bearerAuthenticationToken.isExpired()) {
                 String url = "http://localhost:8080/byggoffice/export";
-                ResponseEntity<GeneralResponseDto> response = doPostRequest(url, bearerAuthenticationToken, byggOfficeDto);
-                MessageDto responseMessageDto = (MessageDto) response.getBody().getData();
+                // ResponseEntity<GeneralResponseDto> response = doPostRequest(url, bearerAuthenticationToken, byggOfficeDto);
+                GeneralResponseDto response = doPostRequest(url, bearerAuthenticationToken, byggOfficeDto);
+                MessageDto responseMessageDto = (MessageDto) response.getData();
+                if (responseMessageDto == null) {
+                    responseMessageDto = new MessageDto();
+                    responseMessageDto.setMessage(response.getMessage());
+                }
                 return responseMessageDto;
             } else {
                 String s = "Failed to get valid api-token for client type " + client.getClientType();
